@@ -1,0 +1,7 @@
+name,email,age,status,created_at,notes,is_vip
+John Doe,john@example.com,30,active,2024-01-15T09:00:00Z,Regular customer,false
+Jane Smith,jane@example.com,25,active,2024-01-16T10:30:00Z,Premium member,true
+Bob Johnson,bob@invalid-email,35,inactive,2024-01-10T14:20:00Z,Former customer,false
+Alice Brown,alice@example.com,28,active,2024-01-18T11:45:00Z,VIP customer,true
+Charlie Wilson,charlie@example.com,42,pending,2024-01-20T08:15:00Z,New registration,false
+Emma Davis,emma@example.com,31,active,2024-01-12T16:30:00Z,Corporate account,true
