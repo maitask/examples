@@ -1,16 +1,16 @@
-# Email Notifications
+# 邮件通知
 
 [English](email-notifications.md) | [中文](email-notifications_zh-CN.md)
 
-Package-level example for `@maitask/email-sender`.
+面向 `@maitask/email-sender` 的包级示例。
 
-## Scope
+## 适用范围
 
-- Runtime package execution API
-- Provider-backed outbound email delivery
-- No workflow scheduler dependencies
+- Runtime 包执行 API
+- 基于邮件服务商的外发链路
+- 不依赖工作流调度器
 
-## Prerequisites
+## 前置条件
 
 ```bash
 RUNTIME_URL="http://localhost:8080"
@@ -19,7 +19,7 @@ EMAIL_PKG_URL='@maitask%2Femail-sender'
 export SENDGRID_API_KEY="<your-sendgrid-api-key>"
 ```
 
-Install package:
+安装包：
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/packages/install" \
@@ -27,9 +27,9 @@ curl -sS -X POST "${RUNTIME_URL}/packages/install" \
   -d "{\"package\":\"${EMAIL_PKG}\"}" | jq
 ```
 
-## Steps
+## 步骤
 
-1. Create request payload.
+1. 生成请求体。
 
 ```bash
 jq -n --arg key "$SENDGRID_API_KEY" '{
@@ -44,7 +44,7 @@ jq -n --arg key "$SENDGRID_API_KEY" '{
 }' > /tmp/email_request.json
 ```
 
-2. Execute package.
+2. 执行包。
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/packages/${EMAIL_PKG_URL}/execute" \
@@ -53,14 +53,14 @@ curl -sS -X POST "${RUNTIME_URL}/packages/${EMAIL_PKG_URL}/execute" \
   > /tmp/email_response.json
 ```
 
-## Verification
+## 验证
 
 ```bash
 jq -e '.success == true' /tmp/email_response.json
 jq '.data.result' /tmp/email_response.json
 ```
 
-## Limits
+## 边界说明
 
-- Delivery success depends on provider credentials, sender domain policy, and quota.
-- For production messaging policy, combine this package with Plane workflow/schedule controls.
+- 投递成功受服务商凭据、发信域策略与额度影响。
+- 生产环境建议将该包纳入 Plane 的 workflow/schedule 策略统一治理。

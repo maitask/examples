@@ -1,50 +1,49 @@
-# Docker Compose example showing different communication modes
-# This file demonstrates how to deploy Maitask with different communication strategies
+# Maitask communication mode examples
+# - Default: hybrid (HTTP + gRPC)
+# - Optional profiles: http-only, grpc-only
 
-version: '3.8'
+version: "3.8"
 
 services:
-  # ---------------------------------------------------------------------------
-  # Hybrid Mode (Recommended) - Both HTTP and gRPC with intelligent failover
-  # ---------------------------------------------------------------------------
   runtime-hybrid:
     image: maitask/runtime:latest
     container_name: maitask-runtime-hybrid
     environment:
-      - HTTP_HOST=0.0.0.0
-      - HTTP_PORT=8080
-      - GRPC_HOST=0.0.0.0
-      - GRPC_PORT=50051
-      - RUST_LOG=info,maitask_runtime=debug
-      - JWT_SECRET=your-jwt-secret-key-here
+      HTTP_HOST: 0.0.0.0
+      HTTP_PORT: 8080
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50051
+      SERVICE_AUTH_ENABLED: "true"
+      SERVICE_ID: runtime
+      SERVICE_SECRET: runtime-shared-secret
+      RUST_LOG: info,maitask_runtime=debug
     ports:
-      - "8080:8080"  # HTTP
-      - "50051:50051"  # gRPC
-    volumes:
-      - runtime-data:/app/workspace
-      - runtime-packages:/app/packages
-    networks:
-      - maitask-network
+      - "8080:8080"
+      - "50051:50051"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks:
+      - maitask
 
   plane-hybrid:
     image: maitask/plane:latest
     container_name: maitask-plane-hybrid
     environment:
-      - RUNTIME_COMMUNICATION_MODE=hybrid
-      - RUNTIME_HTTP_URL=http://runtime-hybrid:8080
-      - RUNTIME_GRPC_URLS=http://runtime-hybrid:50051
-      - RUNTIME_ENABLE_FAILOVER=true
-      - RUNTIME_MAX_RETRIES=3
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/maitask
-      - REDIS_URL=redis://redis:6379
-      - SERVER_ADDRESS=0.0.0.0:8001
-      - RUST_LOG=info,maitask_plane=debug
+      SERVER_ADDRESS: 0.0.0.0:8001
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/maitask
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: replace-with-32-char-secret
+      SERVICE_AUTH_ENABLED: "true"
+      SERVICE_SECRETS: runtime:runtime-shared-secret
+      RUNTIME_HTTP_URL: http://runtime-hybrid:8080
+      RUNTIME_GRPC_URLS: grpc://runtime-hybrid:50051
+      CREDITS_ENABLED: "false"
+      PAYMENT_ENABLED: "false"
+      PAYMENT_MOCK_ENABLED: "true"
+      RUST_LOG: info,maitask_plane=debug
     ports:
       - "8001:8001"
     depends_on:
@@ -55,37 +54,54 @@ services:
       runtime-hybrid:
         condition: service_healthy
     networks:
-      - maitask-network
+      - maitask
 
-  # ---------------------------------------------------------------------------
-  # HTTP-Only Mode - Simple firewall-friendly setup
-  # ---------------------------------------------------------------------------
+  plane-frontend:
+    image: maitask/plane-frontend:latest
+    container_name: maitask-plane-frontend
+    environment:
+      VITE_PORT: 3000
+      VITE_PLANE_API_URL: http://plane-hybrid:8001
+      VITE_RUNTIME_API_URL: http://runtime-hybrid:8080
+      VITE_AUTH_ENABLED: "true"
+      VITE_ANALYTICS_ENABLED: "true"
+      VITE_ADMIN_ENABLED: "true"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - plane-hybrid
+    networks:
+      - maitask
+
   runtime-http:
     image: maitask/runtime:latest
     container_name: maitask-runtime-http
     environment:
-      - HTTP_HOST=0.0.0.0
-      - HTTP_PORT=8081
-      - RUST_LOG=info,maitask_runtime=debug
+      HTTP_HOST: 0.0.0.0
+      HTTP_PORT: 8081
+      SERVICE_AUTH_ENABLED: "true"
+      SERVICE_ID: runtime
+      SERVICE_SECRET: runtime-shared-secret
     ports:
       - "8081:8081"
-    volumes:
-      - runtime-data-http:/app/workspace
-      - runtime-packages-http:/app/packages
+    profiles: ["http-only"]
     networks:
-      - maitask-network
-    profiles:
-      - http-only
+      - maitask
 
   plane-http:
     image: maitask/plane:latest
     container_name: maitask-plane-http
     environment:
-      - RUNTIME_COMMUNICATION_MODE=http
-      - RUNTIME_HTTP_URL=http://runtime-http:8081
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/maitask
-      - REDIS_URL=redis://redis:6379
-      - SERVER_ADDRESS=0.0.0.0:8002
+      SERVER_ADDRESS: 0.0.0.0:8002
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/maitask
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: replace-with-32-char-secret
+      SERVICE_AUTH_ENABLED: "true"
+      SERVICE_SECRETS: runtime:runtime-shared-secret
+      RUNTIME_HTTP_URL: http://runtime-http:8081
+      CREDITS_ENABLED: "false"
+      PAYMENT_ENABLED: "false"
+      PAYMENT_MOCK_ENABLED: "true"
     ports:
       - "8002:8002"
     depends_on:
@@ -94,41 +110,40 @@ services:
       redis:
         condition: service_healthy
       runtime-http:
-        condition: service_healthy
+        condition: service_started
+    profiles: ["http-only"]
     networks:
-      - maitask-network
-    profiles:
-      - http-only
+      - maitask
 
-  # ---------------------------------------------------------------------------
-  # gRPC-Only Mode - High performance setup
-  # ---------------------------------------------------------------------------
   runtime-grpc:
     image: maitask/runtime:latest
     container_name: maitask-runtime-grpc
     environment:
-      - GRPC_HOST=0.0.0.0
-      - GRPC_PORT=50052
-      - RUST_LOG=info,maitask_runtime=debug
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50052
+      SERVICE_AUTH_ENABLED: "true"
+      SERVICE_ID: runtime
+      SERVICE_SECRET: runtime-shared-secret
     ports:
       - "50052:50052"
-    volumes:
-      - runtime-data-grpc:/app/workspace
-      - runtime-packages-grpc:/app/packages
+    profiles: ["grpc-only"]
     networks:
-      - maitask-network
-    profiles:
-      - grpc-only
+      - maitask
 
   plane-grpc:
     image: maitask/plane:latest
     container_name: maitask-plane-grpc
     environment:
-      - RUNTIME_COMMUNICATION_MODE=grpc
-      - RUNTIME_GRPC_URLS=http://runtime-grpc:50052
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/maitask
-      - REDIS_URL=redis://redis:6379
-      - SERVER_ADDRESS=0.0.0.0:8003
+      SERVER_ADDRESS: 0.0.0.0:8003
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/maitask
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: replace-with-32-char-secret
+      SERVICE_AUTH_ENABLED: "true"
+      SERVICE_SECRETS: runtime:runtime-shared-secret
+      RUNTIME_GRPC_URLS: grpc://runtime-grpc:50052
+      CREDITS_ENABLED: "false"
+      PAYMENT_ENABLED: "false"
+      PAYMENT_MOCK_ENABLED: "true"
     ports:
       - "8003:8003"
     depends_on:
@@ -137,110 +152,48 @@ services:
       redis:
         condition: service_healthy
       runtime-grpc:
-        condition: service_healthy
+        condition: service_started
+    profiles: ["grpc-only"]
     networks:
-      - maitask-network
-    profiles:
-      - grpc-only
+      - maitask
 
-  # ---------------------------------------------------------------------------
-  # Supporting Services
-  # ---------------------------------------------------------------------------
   postgres:
     image: postgres:15
     container_name: maitask-postgres
     environment:
-      - POSTGRES_DB=maitask
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      POSTGRES_DB: maitask
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - maitask-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d maitask"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - maitask
 
   redis:
     image: redis:7-alpine
     container_name: maitask-redis
     ports:
       - "6379:6379"
-    volumes:
-      - redis-data:/data
-    networks:
-      - maitask-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
-
-  # ---------------------------------------------------------------------------
-  # Monitoring and Observability
-  # ---------------------------------------------------------------------------
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: maitask-prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
-    ports:
-      - "9090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus-data:/prometheus
+      - redis-data:/data
     networks:
-      - maitask-network
-    profiles:
-      - monitoring
+      - maitask
 
-  grafana:
-    image: grafana/grafana:latest
-    container_name: maitask-grafana
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
-    networks:
-      - maitask-network
-    profiles:
-      - monitoring
-
-# ---------------------------------------------------------------------------
-# Network Configuration
-# ---------------------------------------------------------------------------
 networks:
-  maitask-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
+  maitask:
 
-# ---------------------------------------------------------------------------
-# Persistent Volumes
-# ---------------------------------------------------------------------------
 volumes:
   postgres-data:
   redis-data:
-  prometheus-data:
-  grafana-data:
-  runtime-data:
-  runtime-packages:
-  runtime-data-http:
-  runtime-packages-http:
-  runtime-data-grpc:
-  runtime-packages-grpc:

@@ -1,16 +1,16 @@
-# Simple Data Processing
+# 简易数据处理
 
 [English](simple-data-processing.md) | [中文](simple-data-processing_zh-CN.md)
 
-Minimal Runtime smoke test using one parser and one output adapter.
+使用一个解析包和一个输出适配器完成最小 Runtime 冒烟验证。
 
-## Scope
+## 适用范围
 
-- Uses Runtime HTTP API only (`:8080`)
-- Verifies package execution + output adapter write path
-- No Plane auth, billing, or frontend dependencies
+- 仅使用 Runtime HTTP API（`:8080`）
+- 验证包执行链路与输出适配器写入链路
+- 不依赖 Plane 鉴权、计费或前端
 
-## Prerequisites
+## 前置条件
 
 ```bash
 RUNTIME_URL="http://localhost:8080"
@@ -18,7 +18,7 @@ CSV_PKG='@maitask/csv-parser'
 CSV_PKG_URL='@maitask%2Fcsv-parser'
 ```
 
-Install package:
+安装包：
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/packages/install" \
@@ -26,9 +26,9 @@ curl -sS -X POST "${RUNTIME_URL}/packages/install" \
   -d "{\"package\":\"${CSV_PKG}\"}" | jq
 ```
 
-## Steps
+## 步骤
 
-1. Parse inline CSV.
+1. 解析内联 CSV。
 
 ```bash
 cat > /tmp/simple_customers.csv <<'CSV'
@@ -43,7 +43,7 @@ curl -sS -X POST "${RUNTIME_URL}/packages/${CSV_PKG_URL}/execute" \
   > /tmp/simple_parse_response.json
 ```
 
-2. Persist the execution response to local file via adapter endpoint.
+2. 通过输出适配器接口将执行结果写入本地文件。
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/output" \
@@ -52,14 +52,14 @@ curl -sS -X POST "${RUNTIME_URL}/output" \
   | jq
 ```
 
-## Verification
+## 验证
 
 ```bash
 jq -e '.success == true' /tmp/simple_parse_response.json
 jq -e '.success == true' /tmp/maitask-simple-output.json
 ```
 
-## Limits
+## 边界说明
 
-- This is a Runtime-only validation path.
-- For production API governance and auth, execute through Plane.
+- 本示例仅覆盖 Runtime 本地能力。
+- 生产环境的 API 治理与鉴权请通过 Plane。

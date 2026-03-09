@@ -1,16 +1,16 @@
-# CSV Processing Pipeline
+# CSV 处理流水线
 
 [English](csv-processing-pipeline.md) | [中文](csv-processing-pipeline_zh-CN.md)
 
-CSV pipeline example using parser + validator + file output.
+使用 parser + validator + 文件输出的 CSV 流水线示例。
 
-## Scope
+## 适用范围
 
-- Runtime HTTP API (`:8080`)
-- Packages: `@maitask/csv-parser`, `@maitask/data-validator`
-- Output adapter: `file`
+- Runtime HTTP API（`:8080`）
+- 包：`@maitask/csv-parser`、`@maitask/data-validator`
+- 输出适配器：`file`
 
-## Prerequisites
+## 前置条件
 
 ```bash
 RUNTIME_URL="http://localhost:8080"
@@ -20,16 +20,16 @@ VALIDATOR_PKG='@maitask/data-validator'
 VALIDATOR_PKG_URL='@maitask%2Fdata-validator'
 ```
 
-Install packages:
+安装包：
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/packages/install" -H 'Content-Type: application/json' -d "{\"package\":\"${CSV_PKG}\"}" | jq
 curl -sS -X POST "${RUNTIME_URL}/packages/install" -H 'Content-Type: application/json' -d "{\"package\":\"${VALIDATOR_PKG}\"}" | jq
 ```
 
-## Steps
+## 步骤
 
-1. Parse CSV.
+1. 解析 CSV。
 
 ```bash
 cat > /tmp/sales.csv <<'CSV'
@@ -45,7 +45,7 @@ curl -sS -X POST "${RUNTIME_URL}/packages/${CSV_PKG_URL}/execute" \
   > /tmp/csv_parse.json
 ```
 
-2. Validate parsed rows.
+2. 校验解析结果。
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/packages/${VALIDATOR_PKG_URL}/execute" \
@@ -54,7 +54,7 @@ curl -sS -X POST "${RUNTIME_URL}/packages/${VALIDATOR_PKG_URL}/execute" \
   > /tmp/csv_validate.json
 ```
 
-3. Persist validation response.
+3. 持久化校验响应。
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/output" \
@@ -63,7 +63,7 @@ curl -sS -X POST "${RUNTIME_URL}/output" \
   | jq
 ```
 
-## Verification
+## 验证
 
 ```bash
 jq -e '.success == true' /tmp/csv_parse.json
@@ -71,7 +71,7 @@ jq -e '.success == true' /tmp/csv_validate.json
 jq -e '.success == true' /tmp/maitask-csv-validation-report.json
 ```
 
-## Limits
+## 边界说明
 
-- This example validates runtime orchestration and adapter flow only.
-- Scheduling, policy, and tenant governance belong to Plane.
+- 本示例主要验证 Runtime 编排与适配器链路。
+- 调度、策略与租户治理由 Plane 负责。

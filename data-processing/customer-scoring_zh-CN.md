@@ -1,16 +1,16 @@
-# Customer Scoring
+# 客户评分
 
 [English](customer-scoring.md) | [中文](customer-scoring_zh-CN.md)
 
-Scoring flow: validate input with Runtime package, then generate deterministic scores.
+评分流程：先用 Runtime 包校验输入，再生成确定性评分。
 
-## Scope
+## 适用范围
 
-- Runtime package execution (`@maitask/data-validator`)
-- Deterministic scoring via local transformation
-- File output adapter for report persistence
+- Runtime 包执行（`@maitask/data-validator`）
+- 本地确定性评分转换
+- 使用文件适配器落地报告
 
-## Prerequisites
+## 前置条件
 
 ```bash
 RUNTIME_URL="http://localhost:8080"
@@ -18,7 +18,7 @@ VALIDATOR_PKG='@maitask/data-validator'
 VALIDATOR_PKG_URL='@maitask%2Fdata-validator'
 ```
 
-Install package:
+安装包：
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/packages/install" \
@@ -26,9 +26,9 @@ curl -sS -X POST "${RUNTIME_URL}/packages/install" \
   -d "{\"package\":\"${VALIDATOR_PKG}\"}" | jq
 ```
 
-## Steps
+## 步骤
 
-1. Prepare sample customers.
+1. 准备客户样本数据。
 
 ```bash
 cat > /tmp/customers.json <<'JSON'
@@ -40,7 +40,7 @@ cat > /tmp/customers.json <<'JSON'
 JSON
 ```
 
-2. Validate required fields and basic numeric format.
+2. 校验必填字段与基础数值格式。
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/packages/${VALIDATOR_PKG_URL}/execute" \
@@ -49,7 +49,7 @@ curl -sS -X POST "${RUNTIME_URL}/packages/${VALIDATOR_PKG_URL}/execute" \
   > /tmp/customer_validation.json
 ```
 
-3. Compute score and tier.
+3. 计算评分与分层。
 
 ```bash
 jq 'map(. + {
@@ -63,7 +63,7 @@ jq 'map(. + {
 })' /tmp/customers.json > /tmp/customer_scoring_result.json
 ```
 
-4. Persist scored output.
+4. 持久化评分输出。
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/output" \
@@ -72,7 +72,7 @@ curl -sS -X POST "${RUNTIME_URL}/output" \
   | jq
 ```
 
-## Verification
+## 验证
 
 ```bash
 jq -e '.success == true' /tmp/customer_validation.json
@@ -80,6 +80,6 @@ jq -e 'length > 0' /tmp/customer_scoring_result.json
 jq -e '.success == true' /tmp/customer_scoring_report.json
 ```
 
-## Production Note
+## 生产说明
 
-For multi-tenant and auditable scoring logic, publish scorer package metadata in Plane and execute via Plane-managed workflows.
+若需多租户与可审计评分逻辑，建议将评分包发布到 Plane，并通过 Plane 工作流执行。

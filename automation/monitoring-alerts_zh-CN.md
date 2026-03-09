@@ -1,17 +1,17 @@
-# Monitoring and Alerts
+# 监控与告警
 
 [English](monitoring-alerts.md) | [中文](monitoring-alerts_zh-CN.md)
 
-Monitoring pipeline with threshold validation and optional notifications.
+监控流水线：阈值校验 + 可选通知。
 
-## Scope
+## 适用范围
 
-- Runtime package execution
-- Threshold checks via `@maitask/data-validator`
-- Optional Slack/email notifications
-- File artifact for audit trail
+- Runtime 包执行
+- 通过 `@maitask/data-validator` 做阈值校验
+- 可选 Slack/邮件通知
+- 文件落地作为审计产物
 
-## Prerequisites
+## 前置条件
 
 ```bash
 RUNTIME_URL="http://localhost:8080"
@@ -21,14 +21,14 @@ SLACK_PKG_URL='@maitask%2Fslack-notifier'
 EMAIL_PKG_URL='@maitask%2Femail-sender'
 ```
 
-Optional credentials:
+可选凭据：
 
 ```bash
 export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
 export SENDGRID_API_KEY="<your-sendgrid-api-key>"
 ```
 
-Install required packages:
+安装所需包：
 
 ```bash
 for pkg in '@maitask/data-validator' '@maitask/slack-notifier' '@maitask/email-sender'; do
@@ -38,9 +38,9 @@ for pkg in '@maitask/data-validator' '@maitask/slack-notifier' '@maitask/email-s
  done
 ```
 
-## Steps
+## 步骤
 
-1. Generate metrics snapshot.
+1. 生成指标快照。
 
 ```bash
 cat > /tmp/system_metrics.json <<'JSON'
@@ -48,7 +48,7 @@ cat > /tmp/system_metrics.json <<'JSON'
 JSON
 ```
 
-2. Validate threshold breaches.
+2. 校验阈值越界。
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/packages/${VALIDATOR_PKG_URL}/execute" \
@@ -57,7 +57,7 @@ curl -sS -X POST "${RUNTIME_URL}/packages/${VALIDATOR_PKG_URL}/execute" \
   > /tmp/monitor_validation.json
 ```
 
-3. Build normalized alert payload.
+3. 生成标准化告警载荷。
 
 ```bash
 jq -n \
@@ -68,7 +68,7 @@ jq -n \
   > /tmp/monitor_alert_payload.json
 ```
 
-4. Persist alert payload.
+4. 持久化告警载荷。
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/output" \
@@ -77,7 +77,7 @@ curl -sS -X POST "${RUNTIME_URL}/output" \
   | jq
 ```
 
-5. Optional: send Slack notification.
+5. 可选：发送 Slack 通知。
 
 ```bash
 if [ -n "$SLACK_WEBHOOK_URL" ]; then
@@ -88,7 +88,7 @@ if [ -n "$SLACK_WEBHOOK_URL" ]; then
 fi
 ```
 
-6. Optional: send email notification.
+6. 可选：发送邮件通知。
 
 ```bash
 if [ -n "$SENDGRID_API_KEY" ]; then
@@ -110,14 +110,14 @@ if [ -n "$SENDGRID_API_KEY" ]; then
 fi
 ```
 
-## Verification
+## 验证
 
 ```bash
 jq -e '.success == true' /tmp/monitor_validation.json
 jq -e '.success == true' /tmp/monitor_alert_payload_saved.json
 ```
 
-## Limits
+## 边界说明
 
-- This example is threshold-based and intentionally simple.
-- Plane workflows/schedules should own production alert policies and escalation paths.
+- 本示例采用阈值规则，刻意保持简单。
+- 生产告警策略与升级路径应由 Plane 的 workflow/schedule 统一托管。

@@ -1,19 +1,19 @@
-# Web Data Collection
+# Web 数据采集
 
 [English](web-data-collection.md) | [中文](web-data-collection_zh-CN.md)
 
-Collect public web data with network-enabled packages and persist a consolidated report.
+使用可联网包采集公开 Web 数据，并落地为统一报告。
 
-## Scope
+## 适用范围
 
-- Runtime HTTP API (`:8080`)
-- Packages: `@maitask/hackernews-crawler`, `@maitask/web-search`
-- Output adapter: `file`
+- Runtime HTTP API（`:8080`）
+- 包：`@maitask/hackernews-crawler`、`@maitask/web-search`
+- 输出适配器：`file`
 
-## Prerequisites
+## 前置条件
 
-- Runtime network policy must allow outbound requests.
-- If needed, update Runtime config: `execution.allow_network=true` and `execution.allowed_hosts`.
+- Runtime 网络策略需允许外部访问。
+- 如有需要，请在 Runtime 配置中设置 `execution.allow_network=true` 与 `execution.allowed_hosts`。
 
 ```bash
 RUNTIME_URL="http://localhost:8080"
@@ -23,16 +23,16 @@ SEARCH_PKG='@maitask/web-search'
 SEARCH_PKG_URL='@maitask%2Fweb-search'
 ```
 
-Install packages:
+安装包：
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/packages/install" -H 'Content-Type: application/json' -d "{\"package\":\"${HN_PKG}\"}" | jq
 curl -sS -X POST "${RUNTIME_URL}/packages/install" -H 'Content-Type: application/json' -d "{\"package\":\"${SEARCH_PKG}\"}" | jq
 ```
 
-## Steps
+## 步骤
 
-1. Fetch Hacker News top stories.
+1. 拉取 Hacker News 热门帖子。
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/packages/${HN_PKG_URL}/execute" \
@@ -41,7 +41,7 @@ curl -sS -X POST "${RUNTIME_URL}/packages/${HN_PKG_URL}/execute" \
   > /tmp/hn_result.json
 ```
 
-2. Run web search.
+2. 执行 Web 搜索。
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/packages/${SEARCH_PKG_URL}/execute" \
@@ -50,7 +50,7 @@ curl -sS -X POST "${RUNTIME_URL}/packages/${SEARCH_PKG_URL}/execute" \
   > /tmp/search_result.json
 ```
 
-3. Build a consolidated report.
+3. 生成合并报告。
 
 ```bash
 jq -n \
@@ -61,7 +61,7 @@ jq -n \
   > /tmp/web_collection_report.json
 ```
 
-4. Persist report via file adapter.
+4. 通过文件适配器持久化。
 
 ```bash
 curl -sS -X POST "${RUNTIME_URL}/output" \
@@ -70,7 +70,7 @@ curl -sS -X POST "${RUNTIME_URL}/output" \
   | jq
 ```
 
-## Verification
+## 验证
 
 ```bash
 jq -e '.success == true' /tmp/hn_result.json
@@ -78,7 +78,7 @@ jq -e '.success == true' /tmp/search_result.json
 jq -e '.success == true' /tmp/maitask-web-report.json
 ```
 
-## Limits
+## 边界说明
 
-- External provider behavior can change over time (result count, ranking, latency).
-- For user-facing execution APIs, route requests through Plane.
+- 外部数据源行为会随时间变化（结果数量、排序、延迟）。
+- 面向用户的执行入口建议统一经过 Plane。
