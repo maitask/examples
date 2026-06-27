@@ -35,14 +35,13 @@ services:
       SERVER_ADDRESS: 0.0.0.0:8001
       DATABASE_URL: postgresql://postgres:password@postgres:5432/maitask
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: replace-with-32-char-secret
+      JWT_SECRET: replace-with-a-random-secret-at-least-32-chars
       SERVICE_AUTH_ENABLED: "true"
       SERVICE_SECRETS: runtime:runtime-shared-secret
       RUNTIME_HTTP_URL: http://runtime-hybrid:8080
       RUNTIME_GRPC_URLS: grpc://runtime-hybrid:50051
       CREDITS_ENABLED: "false"
       PAYMENT_ENABLED: "false"
-      PAYMENT_MOCK_ENABLED: "true"
       RUST_LOG: info,maitask_plane=debug
     ports:
       - "8001:8001"
@@ -95,13 +94,12 @@ services:
       SERVER_ADDRESS: 0.0.0.0:8002
       DATABASE_URL: postgresql://postgres:password@postgres:5432/maitask
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: replace-with-32-char-secret
+      JWT_SECRET: replace-with-a-random-secret-at-least-32-chars
       SERVICE_AUTH_ENABLED: "true"
       SERVICE_SECRETS: runtime:runtime-shared-secret
       RUNTIME_HTTP_URL: http://runtime-http:8081
       CREDITS_ENABLED: "false"
       PAYMENT_ENABLED: "false"
-      PAYMENT_MOCK_ENABLED: "true"
     ports:
       - "8002:8002"
     depends_on:
@@ -137,13 +135,12 @@ services:
       SERVER_ADDRESS: 0.0.0.0:8003
       DATABASE_URL: postgresql://postgres:password@postgres:5432/maitask
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: replace-with-32-char-secret
+      JWT_SECRET: replace-with-a-random-secret-at-least-32-chars
       SERVICE_AUTH_ENABLED: "true"
       SERVICE_SECRETS: runtime:runtime-shared-secret
       RUNTIME_GRPC_URLS: grpc://runtime-grpc:50052
       CREDITS_ENABLED: "false"
       PAYMENT_ENABLED: "false"
-      PAYMENT_MOCK_ENABLED: "true"
     ports:
       - "8003:8003"
     depends_on:
