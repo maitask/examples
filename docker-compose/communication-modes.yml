@@ -40,8 +40,6 @@ services:
       SERVICE_SECRETS: runtime:runtime-shared-secret
       RUNTIME_HTTP_URL: http://runtime-hybrid:8080
       RUNTIME_GRPC_URLS: grpc://runtime-hybrid:50051
-      CREDITS_ENABLED: "false"
-      PAYMENT_ENABLED: "false"
       RUST_LOG: info,maitask_plane=debug
     ports:
       - "8001:8001"
@@ -98,8 +96,6 @@ services:
       SERVICE_AUTH_ENABLED: "true"
       SERVICE_SECRETS: runtime:runtime-shared-secret
       RUNTIME_HTTP_URL: http://runtime-http:8081
-      CREDITS_ENABLED: "false"
-      PAYMENT_ENABLED: "false"
     ports:
       - "8002:8002"
     depends_on:
@@ -139,8 +135,6 @@ services:
       SERVICE_AUTH_ENABLED: "true"
       SERVICE_SECRETS: runtime:runtime-shared-secret
       RUNTIME_GRPC_URLS: grpc://runtime-grpc:50052
-      CREDITS_ENABLED: "false"
-      PAYMENT_ENABLED: "false"
     ports:
       - "8003:8003"
     depends_on:
