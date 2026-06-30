@@ -8,7 +8,7 @@ Capability-aligned examples for the Maitask platform.
 
 These examples are aligned with the current responsibilities of:
 
-- `runtime`: package execution engine (HTTP/gRPC, output adapters)
+- `runtime`: package execution engine (native binary worker, HTTP/gRPC, output adapters)
 - `plane`: control plane (auth, package metadata, orchestration, credits/payments)
 - `plane-frontend`: console UI on top of Plane/Runtime APIs
 
@@ -45,7 +45,7 @@ curl -sS http://localhost:8001/health | jq
 | Package | [Email Notifications](packages/email-notifications.md) | [邮件通知](packages/email-notifications_zh-CN.md) |
 | Data Processing | [Customer Scoring](data-processing/customer-scoring.md) | [客户评分](data-processing/customer-scoring_zh-CN.md) |
 | Automation | [Monitoring and Alerts](automation/monitoring-alerts.md) | [监控与告警](automation/monitoring-alerts_zh-CN.md) |
-| Deployment | [Communication Modes Compose](docker-compose/communication-modes.yml) | [通信模式 Compose](docker-compose/communication-modes.yml) |
+| Deployment | [Control Plane Compose](docker-compose/communication-modes.yml) | [控制面 Compose](docker-compose/communication-modes.yml) |
 
 ## Naming Note for Scoped Packages
 

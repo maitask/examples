@@ -8,7 +8,7 @@
 
 本目录示例与以下主项目的当前职责对齐：
 
-- `runtime`：Package 执行引擎（HTTP/gRPC、输出适配器）
+- `runtime`：Package 执行引擎（原生二进制 worker、HTTP/gRPC、输出适配器）
 - `plane`：控制面（认证、包元数据、编排、credits/payments）
 - `plane-frontend`：基于 Plane/Runtime API 的控制台 UI
 
@@ -45,7 +45,7 @@ curl -sS http://localhost:8001/health | jq
 | Package | [Email Notifications](packages/email-notifications.md) | [邮件通知](packages/email-notifications_zh-CN.md) |
 | Data Processing | [Customer Scoring](data-processing/customer-scoring.md) | [客户评分](data-processing/customer-scoring_zh-CN.md) |
 | Automation | [Monitoring and Alerts](automation/monitoring-alerts.md) | [监控与告警](automation/monitoring-alerts_zh-CN.md) |
-| Deployment | [Communication Modes Compose](docker-compose/communication-modes.yml) | [通信模式 Compose](docker-compose/communication-modes.yml) |
+| Deployment | [Control Plane Compose](docker-compose/communication-modes.yml) | [控制面 Compose](docker-compose/communication-modes.yml) |
 
 ## Scoped 包名说明
 

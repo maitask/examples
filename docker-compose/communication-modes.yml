@@ -1,36 +1,19 @@
-# Maitask communication mode examples
-# - Default: hybrid (HTTP + gRPC)
-# - Optional profiles: http-only, grpc-only
+# Maitask control-plane communication examples.
+#
+# Runtime is not defined in this Compose file. Install Runtime from a native
+# binary release and expose HTTP/gRPC on the host or on an internal network:
+#
+#   RUNTIME_HTTP_URL=http://host.docker.internal:8080
+#   RUNTIME_GRPC_URLS=http://host.docker.internal:50051
+#
+# Then start this stack for Plane, Frontend, PostgreSQL, and Redis.
 
 version: "3.8"
 
 services:
-  runtime-hybrid:
-    image: maitask/runtime:latest
-    container_name: maitask-runtime-hybrid
-    environment:
-      HTTP_HOST: 0.0.0.0
-      HTTP_PORT: 8080
-      GRPC_HOST: 0.0.0.0
-      GRPC_PORT: 50051
-      SERVICE_AUTH_ENABLED: "true"
-      SERVICE_ID: runtime
-      SERVICE_SECRET: runtime-shared-secret
-      RUST_LOG: info,maitask_runtime=debug
-    ports:
-      - "8080:8080"
-      - "50051:50051"
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
-      interval: 20s
-      timeout: 5s
-      retries: 5
-    networks:
-      - maitask
-
-  plane-hybrid:
+  plane:
     image: maitask/plane:latest
-    container_name: maitask-plane-hybrid
+    container_name: maitask-plane
     environment:
       SERVER_ADDRESS: 0.0.0.0:8001
       DATABASE_URL: postgresql://postgres:password@postgres:5432/maitask
@@ -38,17 +21,17 @@ services:
       JWT_SECRET: replace-with-a-random-secret-at-least-32-chars
       SERVICE_AUTH_ENABLED: "true"
       SERVICE_SECRETS: runtime:runtime-shared-secret
-      RUNTIME_HTTP_URL: http://runtime-hybrid:8080
-      RUNTIME_GRPC_URLS: grpc://runtime-hybrid:50051
+      RUNTIME_HTTP_URL: ${RUNTIME_HTTP_URL:-http://host.docker.internal:8080}
+      RUNTIME_GRPC_URLS: ${RUNTIME_GRPC_URLS:-http://host.docker.internal:50051}
       RUST_LOG: info,maitask_plane=debug
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8001:8001"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      runtime-hybrid:
         condition: service_healthy
     networks:
       - maitask
@@ -57,106 +40,21 @@ services:
     image: maitask/plane-frontend:latest
     container_name: maitask-plane-frontend
     environment:
-      VITE_PORT: 3000
-      VITE_PLANE_API_URL: http://plane-hybrid:8001
-      VITE_RUNTIME_API_URL: http://runtime-hybrid:8080
-      VITE_AUTH_ENABLED: "true"
-      VITE_ANALYTICS_ENABLED: "true"
-      VITE_ADMIN_ENABLED: "true"
+      VITE_PLANE_API_URL: /api
     ports:
-      - "3000:3000"
+      - "3000:80"
     depends_on:
-      - plane-hybrid
-    networks:
-      - maitask
-
-  runtime-http:
-    image: maitask/runtime:latest
-    container_name: maitask-runtime-http
-    environment:
-      HTTP_HOST: 0.0.0.0
-      HTTP_PORT: 8081
-      SERVICE_AUTH_ENABLED: "true"
-      SERVICE_ID: runtime
-      SERVICE_SECRET: runtime-shared-secret
-    ports:
-      - "8081:8081"
-    profiles: ["http-only"]
-    networks:
-      - maitask
-
-  plane-http:
-    image: maitask/plane:latest
-    container_name: maitask-plane-http
-    environment:
-      SERVER_ADDRESS: 0.0.0.0:8002
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/maitask
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: replace-with-a-random-secret-at-least-32-chars
-      SERVICE_AUTH_ENABLED: "true"
-      SERVICE_SECRETS: runtime:runtime-shared-secret
-      RUNTIME_HTTP_URL: http://runtime-http:8081
-    ports:
-      - "8002:8002"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      runtime-http:
-        condition: service_started
-    profiles: ["http-only"]
-    networks:
-      - maitask
-
-  runtime-grpc:
-    image: maitask/runtime:latest
-    container_name: maitask-runtime-grpc
-    environment:
-      GRPC_HOST: 0.0.0.0
-      GRPC_PORT: 50052
-      SERVICE_AUTH_ENABLED: "true"
-      SERVICE_ID: runtime
-      SERVICE_SECRET: runtime-shared-secret
-    ports:
-      - "50052:50052"
-    profiles: ["grpc-only"]
-    networks:
-      - maitask
-
-  plane-grpc:
-    image: maitask/plane:latest
-    container_name: maitask-plane-grpc
-    environment:
-      SERVER_ADDRESS: 0.0.0.0:8003
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/maitask
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: replace-with-a-random-secret-at-least-32-chars
-      SERVICE_AUTH_ENABLED: "true"
-      SERVICE_SECRETS: runtime:runtime-shared-secret
-      RUNTIME_GRPC_URLS: grpc://runtime-grpc:50052
-    ports:
-      - "8003:8003"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      runtime-grpc:
-        condition: service_started
-    profiles: ["grpc-only"]
+      - plane
     networks:
       - maitask
 
   postgres:
-    image: postgres:15
+    image: postgres:16-alpine
     container_name: maitask-postgres
     environment:
       POSTGRES_DB: maitask
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d maitask"]
       interval: 10s
@@ -170,8 +68,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: maitask-redis
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
